@@ -1,0 +1,39 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          java-version: '8'
+          distribution: 'adopt'
+          server-id: sonatype-nexus-snapshots # Value of the distributionManagement/repository/id field of the pom.xml
+          server-username: OSSRH_USERNAME # env variable for username in deploy
+          server-password: OSSRH_PASSWORD # env variable for token in deploy
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }} # Value of the GPG private key to import
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE # env variable for GPG private key passphrase
+
+      - name: Deploy to Nexus
+        run: |
+          mvn clean
+          org.projectlombok:lombok-maven-plugin:1.18.6.0:delombok \
+          -Dlombok.sourceDirectory=src/main/java \
+          -Dlombok.outputDirectory=target/delombok \
+          -Dlombok.addOutputDirectory=false \
+          -DsourceDirectory=target/delombok \
+          -DskipTests=true \
+          package deploy -P sonatype-oss-release
+        env:
+          GPG_TTY: $(tty)
+          OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
