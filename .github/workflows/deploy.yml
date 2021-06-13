@@ -24,7 +24,7 @@ jobs:
 
       - name: Deploy to Nexus
         run: |
-          mvn clean
+          mvn clean \
           org.projectlombok:lombok-maven-plugin:1.18.6.0:delombok \
           -Dlombok.sourceDirectory=src/main/java \
           -Dlombok.outputDirectory=target/delombok \
